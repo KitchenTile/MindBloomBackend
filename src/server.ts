@@ -1,16 +1,12 @@
-import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
-import { connectDb } from "./config/db";
+import { connectDB } from "./config/db";
 import { logger } from "./middleware/logger";
-// import userRoutes from "./routes/userRoutes";
-// import authRoutes from "./routes/authRoutes";
-// import postRouter from "./routes/postRoutes";
-
-dotenv.config();
+import lessonRouter from "./routes/lessonRoutes";
 
 const app = express();
-connectDb();
+
+connectDB().catch(console.dir);
 
 app.use(express.json());
 
@@ -30,9 +26,7 @@ app.get("/", (_req, res) => {
   res.send("Server running as intended");
 });
 
-// app.use("/api/users", userRoutes);
-// app.use("/api/auth", authRoutes);
-// app.use("/api/posts", postRouter);
+app.use("/api/lessons", lessonRouter);
 
 app.listen(PORT, () => {
   console.log(`server running on localhost:${PORT}`);
