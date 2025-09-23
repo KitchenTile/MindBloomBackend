@@ -6,6 +6,7 @@
     "lib": ["ES2020"],
 
     "rootDir": "./src",
+    "outDir": "./dist",
     "module": "commonjs",
     "noUncheckedIndexedAccess": true,
     // "exactOptionalPropertyTypes": true,
