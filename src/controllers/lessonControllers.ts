@@ -24,23 +24,18 @@ export const updateLesson = async (
     const db = await connectDB();
     const lessonsCollection = db.collection("lessons");
     const ordersCollection = db.collection("orders");
-    const currentOrder = ordersCollection.findOne({
+    const currentOrder = await ordersCollection.findOne({
       _id: new ObjectId(req.params.id),
     });
 
+    console.log(currentOrder);
+
     for (let i = 0; i < currentOrder.lessonsOrdered.length; i++) {
       await lessonsCollection.updateOne(
-        { _id: currentOrder.lessonsOrdered[i].lessonId },
-        { $inc: { numOfSpaces: -currentOrder.lessonsOrdered[i].amount } }
+        { _id: new ObjectId(currentOrder.lessonsOrdered[i].lessonId) },
+        { $inc: { numOfSpaces: -currentOrder.lessonsOrdered[i].numOfSpaces } }
       );
     }
-    //   const allLesson = await lessonsCollection.find({}).toArray();
-
-    //   const lessonSpacesObj = {};
-
-    //   allLesson.forEach((lesson: any) => {
-    //       lessonSpacesObj[lesson] = 0;
-    //   });
 
     return res.status(200).json({ message: "Lessons updated" });
   } catch (error) {
