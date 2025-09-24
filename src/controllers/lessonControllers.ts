@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { ObjectId } from "mongodb";
 import { connectDB } from "../config/db";
 
 export const getAllLessons = async (req: Request, res: Response) => {
@@ -8,17 +9,42 @@ export const getAllLessons = async (req: Request, res: Response) => {
 
     const allLessons = await lessonsCollection.find({}).toArray();
     console.log(allLessons);
-    return res.status(200).send(allLessons);
+    return res.status(200).json(allLessons);
   } catch (error) {
     console.log(error);
     return res.status(500).send("Server error");
   }
 };
 
-export const updateLesson = async (req: Request, res: Response) => {
+export const updateLesson = async (
+  req: Request<{ id: string }>,
+  res: Response
+) => {
   try {
-    // const lessonIds = req.body.
+    const db = await connectDB();
+    const lessonsCollection = db.collection("lessons");
+    const ordersCollection = db.collection("orders");
+    const currentOrder = ordersCollection.findOne({
+      _id: new ObjectId(req.params.id),
+    });
+
+    for (let i = 0; i < currentOrder.lessonsOrdered.length; i++) {
+      await lessonsCollection.updateOne(
+        { _id: currentOrder.lessonsOrdered[i].lessonId },
+        { $inc: { numOfSpaces: -currentOrder.lessonsOrdered[i].amount } }
+      );
+    }
+    //   const allLesson = await lessonsCollection.find({}).toArray();
+
+    //   const lessonSpacesObj = {};
+
+    //   allLesson.forEach((lesson: any) => {
+    //       lessonSpacesObj[lesson] = 0;
+    //   });
+
+    return res.status(200).json({ message: "Lessons updated" });
   } catch (error) {
     console.log(error);
+    return res.status(500).send("Server error");
   }
 };
