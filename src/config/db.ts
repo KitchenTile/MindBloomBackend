@@ -10,7 +10,7 @@ const client = new MongoClient(uri, {
   },
 });
 
-let db;
+let db: any;
 
 export async function connectDB() {
   if (db) return db;
@@ -20,16 +20,9 @@ export async function connectDB() {
     await client.connect();
 
     db = client.db("MindBloom");
-    // Send a ping to confirm a successful connection
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
-
-    console.log(db);
-
+    console.log("DB connected");
     return db;
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
+  } catch (error) {
+    console.log(error);
   }
 }
