@@ -8,7 +8,9 @@ export const getAllLessons = async (req: Request, res: Response) => {
     const lessonsCollection = db.collection("lessons");
 
     const allLessons = await lessonsCollection.find({}).toArray();
+
     console.log(allLessons);
+
     return res.status(200).json(allLessons);
   } catch (error) {
     console.log(error);
@@ -27,8 +29,6 @@ export const updateLesson = async (
     const currentOrder = await ordersCollection.findOne({
       _id: new ObjectId(req.params.id),
     });
-
-    console.log(currentOrder);
 
     for (let i = 0; i < currentOrder.lessonsOrdered.length; i++) {
       await lessonsCollection.updateOne(
