@@ -3,6 +3,7 @@ import cors from "cors";
 import { connectDB } from "./config/db";
 import { logger } from "./middleware/logger";
 import lessonRouter from "./routes/lessonRoutes";
+import orderRouter from "./routes/orderRoutes";
 
 const app = express();
 
@@ -26,7 +27,8 @@ app.get("/", (_req, res) => {
   res.send("Server running as intended");
 });
 
-app.use("/api/lessons", lessonRouter);
+app.use("/lessons", lessonRouter);
+app.use("/orders", orderRouter);
 
 app.listen(PORT, () => {
   console.log(`server running on localhost:${PORT}`);
