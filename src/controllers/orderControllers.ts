@@ -7,6 +7,17 @@ export const addOrder = async (req: Request, res: Response) => {
     const db = await connectDB();
 
     const { lessonIds, name, phoneNumber, numOfSpaces } = req.body;
+
+    if (!lessonIds || !name || !phoneNumber || !numOfSpaces) {
+      return res.status(400).json({ message: "Required entries missing" });
+    }
+
+    if (lessonIds.length !== numOfSpaces.length) {
+      return res
+        .status(400)
+        .json({ message: "Lessons and spaces don't match" });
+    }
+
     const lessonsOrdered = [];
 
     lessonIds.forEach((lesson: string, index: number) => {
