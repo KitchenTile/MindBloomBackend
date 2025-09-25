@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
 import { connectDB } from "../config/db";
-import { ObjectId } from "mongodb";
-// import OrderModel from "../models/order";
 
 export const addOrder = async (req: Request, res: Response) => {
   try {
