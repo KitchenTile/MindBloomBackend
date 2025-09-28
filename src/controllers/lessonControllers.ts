@@ -23,6 +23,7 @@ export const updateLesson = async (
   res: Response
 ) => {
   try {
+    console.log(req.params.id);
     const db = await connectDB();
     const lessonsCollection = db.collection("lessons");
     const ordersCollection = db.collection("orders");
