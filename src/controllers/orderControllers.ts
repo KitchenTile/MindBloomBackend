@@ -7,15 +7,6 @@ export const addOrder = async (req: Request, res: Response) => {
 
     const { name, phoneNumber, lessonsOrdered } = req.body;
 
-    // const lessonsOrdered = [];
-
-    // lessonIds.forEach((lesson: string, index: number) => {
-    //   lessonsOrdered.push({
-    //     lessonId: lesson,
-    //     numOfSpaces: numOfSpaces[index],
-    //   });
-    // });
-
     const order = { name, phoneNumber, lessonsOrdered };
 
     console.log("new order");
