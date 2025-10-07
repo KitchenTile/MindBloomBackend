@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
-import { connectDB } from "../config/db";
+import { connectDB } from "../config/db.js";
 
 export const getAllLessons = async (req: Request, res: Response) => {
   try {
