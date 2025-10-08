@@ -7,7 +7,9 @@
 
     "rootDir": "./src",
     "outDir": "./dist",
-    "module": "commonjs",
+    // "module": "commonjs",
+        "module": "nodenext",
+    "moduleResolution": "nodenext",
     "noUncheckedIndexedAccess": true,
     // "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
