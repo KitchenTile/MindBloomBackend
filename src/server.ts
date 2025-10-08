@@ -1,9 +1,9 @@
 import express from "express";
 import cors from "cors";
-import { connectDB } from "./config/db";
-import { logger } from "./middleware/logger";
-import lessonRouter from "./routes/lessonRoutes";
-import orderRouter from "./routes/orderRoutes";
+import { connectDB } from "./config/db.js";
+import { logger } from "./middleware/logger.js";
+import lessonRouter from "./routes/lessonRoutes.js";
+import orderRouter from "./routes/orderRoutes.js";
 
 const app = express();
 
