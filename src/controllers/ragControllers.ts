@@ -4,16 +4,16 @@ import OpenAI from "openai";
 
 export const handleChat = async (req: Request, res: Response) => {
   try {
+    //init gpt client
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
     const userQuery = req.body.userQuery;
 
-    console.log(userQuery);
-
+    //similarity search
     const relataedChunks = await handleUserQuery(userQuery);
 
     const chunkContent = relataedChunks.map((chunk) => chunk.chunk_content);
 
+    //shape the gpt promp
     const gptReply = await client.chat.completions.create({
       model: "gpt-4",
       messages: [
