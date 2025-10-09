@@ -4,8 +4,8 @@ import { connectDB } from "./config/db.js";
 import { logger } from "./middleware/logger.js";
 import lessonRouter from "./routes/lessonRoutes.js";
 import orderRouter from "./routes/orderRoutes.js";
-import { bookHandler } from "./utils/injectionDataProcessor.js";
-// import { dataLoader } from "./utils/data_loader.js";
+import ragRouter from "./routes/ragRoutes.js";
+// import { getQuestionEmbedding } from "./utils/userDataRetrival.js";
 
 const app = express();
 
@@ -32,24 +32,11 @@ app.get("/", (_req, res) => {
 //use the routes created in the routes directories
 app.use("/lessons", lessonRouter);
 app.use("/orders", orderRouter);
+app.use("/chat", ragRouter);
 
 app.listen(PORT, () => {
   console.log(`server running on localhost:${PORT}`);
 });
-
-const sampleMetadata = {
-  topic: "AI",
-  title: "A Practical Guide to RAG",
-  chapters: 3,
-  author: "J. Doe",
-  year: 2024,
-};
-
-// const embeddings = await bookHandler(
-//   "C:/Users/azuld/OneDrive/Documents/GitHub/MindBloomBackend/src/test.txt",
-//   sampleMetadata
-// );
-// console.log(embeddings);
 
 app.use(
   (
