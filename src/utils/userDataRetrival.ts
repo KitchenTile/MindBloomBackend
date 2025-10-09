@@ -6,11 +6,42 @@ const generateEmbedding = await pipeline(
   "Supabase/gte-small"
 );
 
-export const getQuestionEmbedding = async (question: string) => {
+//vectorize and match users question
+export const handleUserQuery = async (question: string) => {
+  const embedding = await getQuestionEmbedding(question);
+
+  console.log("embedding");
+  console.log(embedding);
+
+  const result = await matchBookChunks(embedding);
+
+  console.log("result");
+
+  return result;
+};
+
+//vectorize user's question
+const getQuestionEmbedding = async (question: string): Promise<number[]> => {
   //supabase small has a 512 token limit. Could consider chunking lengthy questions
-  const embeddedQuestion = await generateEmbedding(question, {
-    pooling: "mean",
-    normalize: true,
+  const embeddedQuestion = (
+    await generateEmbedding(question, {
+      pooling: "mean",
+      normalize: true,
+    })
+  ).tolist() as number[][];
+
+  return embeddedQuestion[0];
+};
+
+//match book chunks with users question
+const matchBookChunks = async (embedding: number[]) => {
+  const { data, error } = await supabase.rpc("match_book_chunks", {
+    query_embedding: embedding,
+    match_threshold: 0.78,
+    match_count: 10,
   });
-  return embeddedQuestion;
+
+  if (error) return error;
+
+  return data;
 };
