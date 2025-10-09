@@ -28,9 +28,9 @@ export const handleChat = async (req: Request, res: Response) => {
       ],
     });
 
-    console.log(gptReply.choices[0].message);
+    const replyContent = gptReply.choices[0].message.content;
 
-    return res.status(201).json();
+    return res.status(201).json(replyContent);
   } catch (error) {
     console.log(error);
     return res.status(500).send("Server error");
