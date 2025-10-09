@@ -1,5 +1,5 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 //MONGO
 const uri = process.env.MONGO_URI!;
@@ -30,8 +30,7 @@ export async function connectDB() {
 }
 
 //SUPABASE
-
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_API_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey);
