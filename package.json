@@ -10,6 +10,8 @@
     "mongodb": "^6.20.0",
     "nodemon": "^3.1.10",
     "openai": "^6.2.0",
+    "pdf-parse": "^2.2.6",
+    "pdfdataextract": "^4.0.0",
     "prettier": "^3.6.2",
     "prettier-eslint": "^16.4.2",
     "ts-node": "^10.9.2",
