@@ -4,6 +4,7 @@ import { readFileSync } from "fs";
 import { supabase } from "../config/db.js";
 import { PDFParse } from "pdf-parse";
 import { readFile } from "node:fs/promises";
+import { LlamaParseReader } from "llama-cloud-services";
 
 const generateEmbedding = await pipeline(
   "feature-extraction",
@@ -54,7 +55,7 @@ const dataProcessor = async (
         // }
 
         await parser.destroy();
-        data = textResult;
+        data = textResult.text;
         break;
       case "txt":
         console.log("TXT");
@@ -62,7 +63,12 @@ const dataProcessor = async (
         break;
     }
 
-    console.log(data.text);
+    // const reader = new LlamaParseReader({
+    //     resultType: "markdown",
+    //     apiKey: process.env.LLAMA_CLOUD_API_KEY,
+    //   });
+
+    console.log(data);
 
     //split and filter empty spaces
     const chunks = data
