@@ -27,14 +27,16 @@ export const handleUserQuery = async (question: string) => {
 
   const chunks = await matchBookChunks(embedding);
 
-  const result = await getChunkNeighbours(chunks);
+  const addedContext = await getChunkNeighbours(chunks);
 
-  console.log("Match result");
-  result.map((r) => {
-    console.log(r.data);
-  });
+  const result = {
+    chunks: chunks,
+    addedContext: addedContext.map((r) => r.data),
+  };
 
-  return chunks;
+  console.log(result.addedContext);
+
+  return result;
 };
 
 //vectorize user's question
