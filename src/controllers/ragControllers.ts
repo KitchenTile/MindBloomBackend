@@ -15,11 +15,14 @@ export const handleChat = async (req: Request, res: Response) => {
     //similarity search
     const relataedChunks = await handleUserQuery(userQuery);
 
+    console.log("CONTROLLER");
+    console.log(relataedChunks);
+
     //Format the information returned in a way it's easily understood by the LLM, providing some metadata
     const chunkContentFormatted = relataedChunks
       .map(
         (chunk: any, index: number) =>
-          `--- SOURCE ${index + 1} (Chapter ${chunk.chapter}) ---\n${chunk.chunk_content}\n`
+          `--- SOURCE ${index + 1} (Title: ${chunk.book_title}, Author: ${chunk.book_author}, Chapter ${chunk.chapter}) ---\n${chunk.chunk_content}\n`
       )
       .join("\n\n");
 
@@ -27,11 +30,11 @@ export const handleChat = async (req: Request, res: Response) => {
 
     // // shape the gpt promp
     // const gptReply = await client.chat.completions.create({
-    //   model: "gpt-4",
+    //   model: "gpt-5-nano",
     //   messages: [
     //     {
     //       role: "system",
-    //       content: `You are a helpful assistant. Use the following documents to answer the user's question. If the answer is not contained in the documents, say "I don't have enough information to answer that question." Do not make up any information.
+    //       content: `You are a helpful assistant. Use the following documents to answer the user's question, if you use differnet books for your answer, cite the book title, its author and the chapter of the book you used. If the answer is not contained in the documents, say "I don't have enough information to answer that question." Do not make up any information.
     //       Documents:
     //       ${chunkContentFormatted}`,
     //     },
