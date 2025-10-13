@@ -16,15 +16,19 @@ export const handleChat = async (req: Request, res: Response) => {
     const relataedChunks = await handleUserQuery(userQuery);
 
     console.log("CONTROLLER");
-    console.log(relataedChunks);
+    // console.log(relataedChunks);
 
-    //Format the information returned in a way it's easily understood by the LLM, providing some metadata
-    const chunkContentFormatted = relataedChunks
-      .map(
-        (chunk: any, index: number) =>
-          `--- SOURCE ${index + 1} (Title: ${chunk.book_title}, Author: ${chunk.book_author}, Chapter ${chunk.chapter}) ---\n${chunk.chunk_content}\n`
-      )
-      .join("\n\n");
+    const chunkContentFormatted = Object.entries(relataedChunks).map(
+      (a) => a[1]
+    );
+
+    // //Format the information returned in a way it's easily understood by the LLM, providing some metadata
+    // const chunkContentFormatted = relataedChunks.chunks
+    //   .map(
+    //     (chunk: any, index: number) =>
+    //       `--- SOURCE ${index + 1} (Title: ${chunk.book_title}, Author: ${chunk.book_author}, Chapter ${chunk.chapter}) ---\n${chunk.chunk_content}\n`
+    //   )
+    //   .join("\n\n");
 
     console.log(chunkContentFormatted);
 
@@ -43,7 +47,6 @@ export const handleChat = async (req: Request, res: Response) => {
     //       content: `${userQuery}`,
     //     },
     //   ],
-    //   max_tokens: 500,
     // });
 
     // const replyContent = gptReply.choices[0].message.content;
