@@ -5,7 +5,7 @@ import { logger } from "./middleware/logger.js";
 import lessonRouter from "./routes/lessonRoutes.js";
 import orderRouter from "./routes/orderRoutes.js";
 import ragRouter from "./routes/ragRoutes.js";
-import { bookHandler } from "./utils/injectionDataProcessor.js";
+import { bookHandler } from "./utils/dataIngestionPipeline.js";
 // import { getQuestionEmbedding } from "./utils/userDataRetrival.js";
 
 const app = express();
@@ -23,7 +23,6 @@ app.use(express.json());
 
 app.use(logger);
 
-
 const PORT = process.env.PORT || 4000;
 
 app.get("/", (_req, res) => {
@@ -35,15 +34,15 @@ app.use("/lessons", lessonRouter);
 app.use("/orders", orderRouter);
 app.use("/chat", ragRouter);
 
-// const bookMetadata = {
-//     topic: "Full Stack Development Module",
-//   title: "Fll Stack Handbook",
-//   chapters: 10,
-//   author: "Middlesex University",
-//   year: 2025,
-// }
+const bookMetadata = {
+  topic: "Full Stack Development Module",
+  title: "Fll Stack Handbook",
+  chapters: 10,
+  author: "Middlesex University",
+  year: 2025,
+};
 
-// bookHandler("src/data/FULLSTACKHANDBOOK.pdf", bookMetadata)
+// bookHandler("src/data/FULLSTACKHANDBOOK.pdf", bookMetadata);
 
 app.listen(PORT, () => {
   console.log(`server running on localhost:${PORT}`);
