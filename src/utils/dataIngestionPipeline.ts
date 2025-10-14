@@ -5,6 +5,7 @@ import { supabase } from "../config/db.js";
 import { PDFParse } from "pdf-parse";
 import { readFile } from "node:fs/promises";
 import { LlamaParseReader } from "llama-cloud-services";
+import OpenAI from "openai";
 
 const generateEmbedding = await pipeline(
   "feature-extraction",
@@ -14,16 +15,15 @@ const generateEmbedding = await pipeline(
 interface bookMetadata {
   topic: string;
   title: string;
-  chapters: number;
   author: string;
   year: number;
 }
 
 export const bookHandler = async (file_dir: string, metadata: bookMetadata) => {
-  const { topic, title, chapters, author, year } = metadata;
+  const { topic, title, author, year } = metadata;
 
   // upload book metadata and return id
-  const bookId = await bookUpload(topic, title, chapters, author, year);
+  const bookId = await bookUpload(topic, title, author, year);
 
   //chop book and return chunks + embeddings
   const embeddings = await dataProcessor(file_dir);
@@ -130,7 +130,6 @@ const chunkUpload = async (
 const bookUpload = async (
   topic: string,
   title: string,
-  chapters: number,
   author: string,
   year: number
 ): Promise<string> => {
@@ -140,7 +139,6 @@ const bookUpload = async (
       .insert({
         title: title,
         author: author,
-        chapters: chapters,
         topic: topic,
         year: year,
       })
@@ -159,4 +157,54 @@ const bookUpload = async (
 const getFileExtension = (filename: string): string | null => {
   const parts = filename.split(".");
   return parts.length > 1 ? parts.pop()?.toLowerCase() : null;
+};
+
+const textExtract =
+  "## Use R! _Series Editors:_ Robert Gentleman Kurt Hornik Giovanni G. Parmigiani For further volumes: [http://www.springer.com/series/6991](http://www.springer.com/series/6991) ## Kenneth Knoblauch • Laurence T. Maloney ## Modeling Psychophysical ## Data in R # 123 Kenneth Knoblauch Department of Integrative Neurosciences Stem-cell and Brain Research Institute INSERM U846 18 avenue du Doyen Lépine Bron, France Laurence T. Maloney Department of Psychology Center for Neural Science New York University 6 Washington Place, 2nd Floor New York, USA _Series Editors:_ Robert Gentleman Program in Computational Biology Division of Public Health Sciences Fred Hutchinson Cancer Research Center 1100 Fairview Ave. N, M2-B876 Seattle, Washington 98109-1024 USA Giovanni G. Parmigiani The Sidney Kimmel Comprehensive Cancer Center at Johns Hopkins University 550 North Broadway Baltimore, MD 21205-2011 USA";
+
+//feed gpt an amount of text (undetermined) and ask to get the metadata we need
+export const getGptMetadata = async (textExtract: string) => {
+  try {
+    //init gpt client
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // //ask gpt for metadata
+    // const gptReply = await client.chat.completions.create({
+    //   model: "gpt-5",
+    //   // text: { type: "json_schema" },
+    //   response_format: { type: "json_object" },
+
+    //   messages: [
+    //     {
+    //       role: "system",
+    //       content: `
+    //       You are an expert Librarian and Metadata Extractor. Your task is to analyze the provided text snippet, identify the full title and author of the book, and then use your knowledge and external search tools to find the required publication details.
+
+    //       1. **Required Fields:** You MUST return a single JSON object with the following four keys.
+    //         - "Title": (The full book title as a string)
+    //         - "Author": (The full name of the author, as an array of strings)
+    //         - "Year": (The year of publication as a number)
+    //         - "ISBN_13": (The 13-digit International Standard Book Number as a string)
+
+    //       2. **Output Rule:** Your entire response MUST be valid JSON. DO NOT include any introductory or concluding text.
+    //       `,
+    //     },
+    //     {
+    //       role: "user",
+    //       content: `pelase find the following book and its information ${textExtract}`,
+    //     },
+    //   ],
+    // });
+    // const bookMetadata = gptReply.choices[0].message.content;
+
+    const bookMetadata = {
+      Title: "Modeling Psychophysical Data in R",
+      Author: ["Kenneth Knoblauch", "Laurence T. Maloney"],
+      Year: 2012,
+      ISBN_13: "9781461444749",
+    };
+    console.log(bookMetadata);
+  } catch (error) {
+    console.log(error);
+  }
 };
