@@ -15,20 +15,16 @@ export const handleChat = async (req: Request, res: Response) => {
     //similarity search
     const relataedChunks = await handleUserQuery(userQuery);
 
-    console.log("CONTROLLER");
+    // console.log("CONTROLLER");
     // console.log(relataedChunks);
 
-    const chunkContentFormatted = Object.entries(relataedChunks).map(
-      (a) => a[1]
-    );
-
-    // //Format the information returned in a way it's easily understood by the LLM, providing some metadata
-    // const chunkContentFormatted = relataedChunks.chunks
-    //   .map(
-    //     (chunk: any, index: number) =>
-    //       `--- SOURCE ${index + 1} (Title: ${chunk.book_title}, Author: ${chunk.book_author}, Chapter ${chunk.chapter}) ---\n${chunk.chunk_content}\n`
-    //   )
-    //   .join("\n\n");
+    //Format the information returned in a way it's easily understood by the LLM, providing some metadata
+    const chunkContentFormatted = relataedChunks
+      .map(
+        (chunk: any, index: number) =>
+          `--- SOURCE ${index + 1} (Title: ${chunk.book_title}, Author: ${chunk.book_author}, Chapter ${chunk.chapter}) ---\n${chunk.chunk_content}\n`
+      )
+      .join("\n\n");
 
     console.log(chunkContentFormatted);
 
