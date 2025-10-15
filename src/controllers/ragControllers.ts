@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { handleUserQuery } from "../utils/queryRetrivalPipeline.js";
 import OpenAI from "openai";
+import { supabase } from "../config/db.js";
 
 export const handleChat = async (req: Request, res: Response) => {
   try {
@@ -28,30 +29,44 @@ export const handleChat = async (req: Request, res: Response) => {
 
     console.log(chunkContentFormatted);
 
-    // // shape the gpt promp
-    // const gptReply = await client.chat.completions.create({
-    //   model: "gpt-5-nano",
-    //   messages: [
-    //     {
-    //       role: "system",
-    //       content: `You are a helpful assistant. Use the following documents to answer the user's question, if you use differnet books for your answer, cite the book title, its author and the chapter of the book you used. If the answer is not contained in the documents, say "I don't have enough information to answer that question." Do not make up any information.
-    //       Documents:
-    //       ${chunkContentFormatted}`,
-    //     },
-    //     {
-    //       role: "user",
-    //       content: `${userQuery}`,
-    //     },
-    //   ],
-    // });
+    console.log("CALL GPT REPLY");
+    // shape the gpt promp
+    const gptReply = await client.chat.completions.create({
+      model: "gpt-5-nano",
+      messages: [
+        {
+          role: "system",
+          content: `You are a helpful assistant. Use the following documents to answer the user's question, if you use differnet books for your answer, cite the book title, its author and the chapter of the book you used. If the answer is not contained in the documents, say "I don't have enough information to answer that question." Do not make up any information.
+          Documents:
+          ${chunkContentFormatted}`,
+        },
+        {
+          role: "user",
+          content: `${userQuery}`,
+        },
+      ],
+    });
 
-    // const replyContent = gptReply.choices[0].message.content;
+    const replyContent = gptReply.choices[0].message.content;
 
-    // console.log(replyContent);
+    console.log("reply");
+    console.log(replyContent);
 
-    // return res.status(200).json(replyContent);
+    return res.status(200).json(replyContent);
   } catch (error) {
     console.log(error);
     return res.status(500).send("Server error");
   }
 };
+
+// const uploadMessage = async (chatId, message: string) => {
+
+//   const messageObj =   { "role": "user", "content": message, "timestamp": Date.now() }
+
+//       const { error } = await supabase
+//         .from("chats")
+//         .update(message: message);
+
+//       if (error) return error;
+
+//     }
