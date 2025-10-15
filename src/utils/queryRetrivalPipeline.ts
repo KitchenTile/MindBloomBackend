@@ -18,25 +18,28 @@ interface finalChunk {
   book_author: string;
 }
 
-//vectorize and match users question
+interface NeighborChunk {
+  book_id: number;
+  chapter: number;
+  chunk_content: string;
+  chunk_order: number;
+  book_title: string;
+  book_author: string;
+}
+
+//vectorize and match users question with added context
 export const handleUserQuery = async (question: string) => {
   const embedding = await getQuestionEmbedding(question);
 
-  // console.log("question embedding");
-  // console.log(embedding);
-
+  //semantic search
   const chunks = await matchBookChunks(embedding);
 
   const addedContext = await getChunkNeighbours(chunks);
 
-  const result = {
-    chunks: chunks,
-    addedContext: addedContext.map((r) => r.data),
-  };
+  // data from chunks + added context with metadata
+  const result = addedContext.map((r) => r.data);
 
-  console.log(result.addedContext);
-
-  return result;
+  return result[0];
 };
 
 //vectorize user's question
