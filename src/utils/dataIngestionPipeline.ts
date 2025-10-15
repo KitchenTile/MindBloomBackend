@@ -19,14 +19,15 @@ interface bookMetadata {
   year: number;
 }
 
-export const bookHandler = async (file_dir: string, metadata: bookMetadata) => {
-  const { topic, title, author, year } = metadata;
+export const bookHandler = async (file_dir: string) => {
+  //chop book and return chunks + embeddings
+  const embeddings = await dataProcessor(file_dir);
+
+  //get the metadata from the gpt call
+  const { topic, title, author, year } = await getGptMetadata(file_dir);
 
   // upload book metadata and return id
   const bookId = await bookUpload(topic, title, author, year);
-
-  //chop book and return chunks + embeddings
-  const embeddings = await dataProcessor(file_dir);
 
   //upload chunks
   const data = await chunkUpload(bookId, embeddings);
@@ -130,7 +131,7 @@ const chunkUpload = async (
 const bookUpload = async (
   topic: string,
   title: string,
-  author: string,
+  author: string[],
   year: number
 ): Promise<string> => {
   try {
@@ -159,9 +160,6 @@ const getFileExtension = (filename: string): string | null => {
   return parts.length > 1 ? parts.pop()?.toLowerCase() : null;
 };
 
-const textExtract =
-  "## Use R! _Series Editors:_ Robert Gentleman Kurt Hornik Giovanni G. Parmigiani For further volumes: [http://www.springer.com/series/6991](http://www.springer.com/series/6991) ## Kenneth Knoblauch • Laurence T. Maloney ## Modeling Psychophysical ## Data in R # 123 Kenneth Knoblauch Department of Integrative Neurosciences Stem-cell and Brain Research Institute INSERM U846 18 avenue du Doyen Lépine Bron, France Laurence T. Maloney Department of Psychology Center for Neural Science New York University 6 Washington Place, 2nd Floor New York, USA _Series Editors:_ Robert Gentleman Program in Computational Biology Division of Public Health Sciences Fred Hutchinson Cancer Research Center 1100 Fairview Ave. N, M2-B876 Seattle, Washington 98109-1024 USA Giovanni G. Parmigiani The Sidney Kimmel Comprehensive Cancer Center at Johns Hopkins University 550 North Broadway Baltimore, MD 21205-2011 USA";
-
 //feed gpt an amount of text (undetermined) and ask to get the metadata we need
 export const getGptMetadata = async (textExtract: string) => {
   try {
@@ -181,10 +179,10 @@ export const getGptMetadata = async (textExtract: string) => {
     //       You are an expert Librarian and Metadata Extractor. Your task is to analyze the provided text snippet, identify the full title and author of the book, and then use your knowledge and external search tools to find the required publication details.
 
     //       1. **Required Fields:** You MUST return a single JSON object with the following four keys.
+    //         - "Topic": (The book's topic from the following options: "Biology", "English", "Computer Science", "History")
     //         - "Title": (The full book title as a string)
     //         - "Author": (The full name of the author, as an array of strings)
     //         - "Year": (The year of publication as a number)
-    //         - "ISBN_13": (The 13-digit International Standard Book Number as a string)
 
     //       2. **Output Rule:** Your entire response MUST be valid JSON. DO NOT include any introductory or concluding text.
     //       `,
@@ -198,12 +196,15 @@ export const getGptMetadata = async (textExtract: string) => {
     // const bookMetadata = gptReply.choices[0].message.content;
 
     const bookMetadata = {
-      Title: "Modeling Psychophysical Data in R",
-      Author: ["Kenneth Knoblauch", "Laurence T. Maloney"],
-      Year: 2012,
-      ISBN_13: "9781461444749",
+      topic: "Computer Science",
+      title: "Modeling Psychophysical Data in R",
+      author: ["Kenneth Knoblauch", "Laurence T. Maloney"],
+      year: 2012,
     };
+
     console.log(bookMetadata);
+
+    return bookMetadata;
   } catch (error) {
     console.log(error);
   }
