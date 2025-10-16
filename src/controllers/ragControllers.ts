@@ -24,13 +24,26 @@ export const handleChat = async (req: Request, res: Response) => {
     //get chat data
     const chatMessages = await fetchChat(chatId);
 
+    let chatMessagesObj;
+
+    chatMessages.map((message) => {
+      for (const [key, value] of Object.entries(message)) {
+        chatMessagesObj = value.map((msg) => {
+          return {
+            role: msg.role,
+            content: msg.content,
+          };
+        });
+      }
+    });
+
+    console.log(chatMessagesObj);
     // Format history for the LLM
-    const historyMessages = chatMessages
-      ? chatMessages.messages.map((msg: any) => ({
-          role: msg.role,
-          content: msg.content,
-        }))
-      : [];
+    const historyMessages = chatMessages ? chatMessagesObj : [];
+
+    console.log("history");
+
+    console.log(historyMessages);
 
     //similarity search
     const relataedChunks = await handleUserQuery(userQuery);
@@ -46,32 +59,32 @@ export const handleChat = async (req: Request, res: Response) => {
     console.log(chunkContentFormatted);
 
     console.log("CALL GPT REPLY");
-    // // shape the gpt promp
-    // const gptReply = await client.chat.completions.create({
-    //   model: "gpt-5-nano",
-    //   messages: [
-    //     {
-    //       role: "system",
-    //       content: `You are a helpful assistant. Use the following documents to answer the user's question, if you use differnet books for your answer, cite the book title, its author and the chapter of the book you used. If the answer is not contained in the documents, say "I don't have enough information to answer that question." Do not make up any information.
-    //       Documents:
-    //       ${chunkContentFormatted}`,
-    //     },
-    //      ...historyMessages
-    //     {
-    //       role: "user",
-    //       content: `${userQuery}`,
-    //     },
-    //   ],
-    // });
+    // shape the gpt promp
+    const gptReply = await client.chat.completions.create({
+      model: "gpt-5-nano",
+      messages: [
+        {
+          role: "system",
+          content: `You are a helpful assistant. Use the following documents to answer the user's question, if you use differnet books for your answer, cite the book title, its author and the chapter of the book you used. If the answer is not contained in the documents, say "I don't have enough information to answer that question." Do not make up any information.
+          Documents:
+          ${chunkContentFormatted}`,
+        },
+        ...historyMessages,
+        {
+          role: "user",
+          content: `${userQuery}`,
+        },
+      ],
+    });
 
-    // const replyContent = gptReply.choices[0].message.content;
+    const replyContent = gptReply.choices[0].message.content;
 
-    // console.log("REPLY");
-    // console.log(replyContent);
+    console.log("REPLY");
+    console.log(replyContent);
 
-    // await uploadMessage(chatId, replyContent, "assistant");
+    await uploadMessage(chatId, replyContent, "assistant");
 
-    // return res.status(200).json(replyContent);
+    return res.status(200).json(replyContent);
   } catch (error) {
     console.log(error);
     return res.status(500).send("Server error");
@@ -108,15 +121,13 @@ const uploadMessage = async (chatId, message: string, role: string) => {
   const messageObj = { role: role, content: message, timestamp: date };
 
   if (newChat) {
-    const { error } = await supabase
-      .from("chats")
-      .insert({
-        chat_id: chatId,
-        title: chatId,
-        user_id: chatId,
-        messages: messageObj,
-        created_at: date,
-      });
+    const { error } = await supabase.from("chats").insert({
+      chat_id: chatId,
+      title: chatId,
+      user_id: chatId,
+      messages: messageObj,
+      created_at: date,
+    });
 
     console.log("UPLOAD NEW MESSAGE");
     if (error) return error;
