@@ -1,9 +1,10 @@
 import express from "express";
-import { handleChat } from "../controllers/ragControllers.js";
+import { getAllChats, handleChat } from "../controllers/ragControllers.js";
 
 const ragRouter = express.Router();
 
 //use the bussiness logic from the controllers
 ragRouter.post("/", handleChat);
+ragRouter.get("/", getAllChats);
 
 export default ragRouter;
