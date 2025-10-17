@@ -2,8 +2,16 @@ import { Request, Response } from "express";
 import { handleUserQuery } from "../utils/queryRetrivalPipeline.js";
 import OpenAI from "openai";
 import { supabase } from "../config/db.js";
-import { FunctionsFetchError } from "@supabase/supabase-js";
-import { title } from "process";
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+interface ChatRow {
+  messages: ChatMessage[];
+}
 
 export const handleChat = async (req: Request, res: Response) => {
   try {
@@ -21,29 +29,18 @@ export const handleChat = async (req: Request, res: Response) => {
 
     //upload user message
     await uploadMessage(chatId, userQuery, "user");
+
     //get chat data
-    const chatMessages = await fetchChat(chatId);
+    const chatData = await fetchChat(chatId);
 
-    let chatMessagesObj;
+    // chatData is a ChatRow object and we extract the messages array
+    const rawHistory = chatData?.messages || [];
 
-    chatMessages.map((message) => {
-      for (const [key, value] of Object.entries(message)) {
-        chatMessagesObj = value.map((msg) => {
-          return {
-            role: msg.role,
-            content: msg.content,
-          };
-        });
-      }
-    });
-
-    console.log(chatMessagesObj);
-    // Format history for the LLM
-    const historyMessages = chatMessages ? chatMessagesObj : [];
-
-    console.log("history");
-
-    console.log(historyMessages);
+    // We only pass role/content to the LLM
+    const historyMessages = rawHistory.map((msg) => ({
+      role: msg.role as "user" | "assistant",
+      content: msg.content,
+    }));
 
     //similarity search
     const relataedChunks = await handleUserQuery(userQuery);
@@ -58,7 +55,7 @@ export const handleChat = async (req: Request, res: Response) => {
 
     console.log(chunkContentFormatted);
 
-    console.log("CALL GPT REPLY");
+    console.log("- CALL GPT REPLY -");
     // shape the gpt promp
     const gptReply = await client.chat.completions.create({
       model: "gpt-5-nano",
@@ -79,7 +76,7 @@ export const handleChat = async (req: Request, res: Response) => {
 
     const replyContent = gptReply.choices[0].message.content;
 
-    console.log("REPLY");
+    console.log("- REPLY -");
     console.log(replyContent);
 
     await uploadMessage(chatId, replyContent, "assistant");
@@ -96,59 +93,53 @@ export const getAllChats = async (req: Request, res: Response) => {
     const { data, error } = await supabase.from("chats").select();
 
     if (error) return error;
-
-    console.log("CHATS");
-    console.log(data);
     return res.status(200).json(data);
   } catch (error) {
     console.log(error);
   }
 };
 
-const uploadMessage = async (chatId, message: string, role: string) => {
-  let newChat = true;
+const uploadMessage = async (chatId: string, message: string, role: string) => {
   if (!chatId) {
     console.log("No chat ID");
   }
-
-  //check if chatId exists in the database
-  const currentChat = await fetchChat(chatId);
-
-  if (currentChat.length !== 0) newChat = false;
 
   // create timestamp, and form the new message object
   const date = new Date(Date.now()).toISOString();
   const messageObj = { role: role, content: message, timestamp: date };
 
-  if (newChat) {
+  //check if chatId exists in the database
+  const currentChat = await fetchChat(chatId);
+
+  if (!currentChat) {
     const { error } = await supabase.from("chats").insert({
       chat_id: chatId,
-      title: chatId,
+      title: "New Chat",
       user_id: chatId,
-      messages: messageObj,
+      messages: [messageObj],
       created_at: date,
     });
 
-    console.log("UPLOAD NEW MESSAGE");
-    if (error) return error;
+    if (error) throw error;
   } else {
     const { error } = await supabase.rpc("add_chat_message", {
       p_chat_id: chatId,
       p_new_message: messageObj,
     });
 
-    console.log("UPDATE MESSAGFE ARRAY");
-    if (error) return error;
+    if (error) throw error;
   }
 };
 
-const fetchChat = async (chatId) => {
+const fetchChat = async (chatId: string): Promise<ChatRow | null> => {
   const { data, error } = await supabase
     .from("chats")
     .select("messages")
-    .eq("chat_id", chatId);
-
-  if (error) return error;
-
-  return data;
+    .eq("chat_id", chatId)
+    .single();
+  if (error && error.code !== "PGRST116") {
+    console.error("Supabase fetchChat error:", error);
+    throw error;
+  }
+  return data as ChatRow | null;
 };
