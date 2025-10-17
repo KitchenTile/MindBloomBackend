@@ -93,11 +93,46 @@ export const getAllChats = async (req: Request, res: Response) => {
     const { data, error } = await supabase.from("chats").select();
 
     if (error) return error;
+    console.log(data);
     return res.status(200).json(data);
   } catch (error) {
     console.log(error);
   }
 };
+
+export const deleteChat = async (req: Request, res: Response) => {
+  try {
+    const chatId = req.body.chatId;
+    const { data, error } = await supabase
+      .from("chats")
+      .delete()
+      .eq("chat_id", chatId);
+
+    if (error) return error;
+    return res.status(200).json(data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const editChatTitle = async (req: Request, res: Response) => {
+  try {
+    const chatId = req.body.chatId;
+    const newTitle = req.body.newTitle;
+
+    const { data, error } = await supabase
+      .from("chats")
+      .update({ title: newTitle })
+      .eq("chat_id", chatId);
+
+    if (error) return error;
+    return res.status(200).json(data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// -- helper functions --
 
 const uploadMessage = async (chatId: string, message: string, role: string) => {
   if (!chatId) {
