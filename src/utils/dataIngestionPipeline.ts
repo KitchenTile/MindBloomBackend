@@ -22,16 +22,16 @@ interface bookMetadata {
 export const bookHandler = async (file_dir: string) => {
   //chop book and return chunks + embeddings
   const embeddings = await dataProcessor(file_dir);
-
-  //get the metadata from the gpt call
+  // get the metadata from the gpt call
+  // const { topic, title, author, year } = JSON.parse(
+  //   await getGptMetadata(file_dir)
+  // );
   const { topic, title, author, year } = await getGptMetadata(file_dir);
 
   // upload book metadata and return id
   const bookId = await bookUpload(topic, title, author, year);
-
   //upload chunks
   const data = await chunkUpload(bookId, embeddings);
-
   return data;
 };
 
@@ -48,15 +48,23 @@ const dataProcessor = async (
         console.log("PDF");
         const buffer = await readFile(file_dir);
         const parser = new PDFParse({ data: buffer });
-        const textResult = await parser.getText();
+        // const textResult = await parser.getText();
 
         // data = {
         //   bookInfo: info,
         //   bookText: textResult
         // }
 
-        await parser.destroy();
-        data = textResult.text;
+        const reader = new LlamaParseReader({
+          resultType: "markdown",
+          apiKey: process.env.LLAMA_CLOUD_API_KEY,
+        });
+
+        const documents = await reader.loadData(file_dir);
+
+        // await parser.destroy();
+        // data = textResult.text;
+        data = documents;
         break;
       case "txt":
         console.log("TXT");
@@ -179,10 +187,10 @@ export const getGptMetadata = async (textExtract: string) => {
     //       You are an expert Librarian and Metadata Extractor. Your task is to analyze the provided text snippet, identify the full title and author of the book, and then use your knowledge and external search tools to find the required publication details.
 
     //       1. **Required Fields:** You MUST return a single JSON object with the following four keys.
-    //         - "Topic": (The book's topic from the following options: "Biology", "English", "Computer Science", "History")
-    //         - "Title": (The full book title as a string)
-    //         - "Author": (The full name of the author, as an array of strings)
-    //         - "Year": (The year of publication as a number)
+    //         - "topic": (The book's topic from the following options: "Biology", "English", "Computer Science", "History")
+    //         - "title": (The full book title as a string)
+    //         - "author": (The full name of the author, as an array of strings)
+    //         - "year": (The year of publication as a number)
 
     //       2. **Output Rule:** Your entire response MUST be valid JSON. DO NOT include any introductory or concluding text.
     //       `,
@@ -197,9 +205,10 @@ export const getGptMetadata = async (textExtract: string) => {
 
     const bookMetadata = {
       topic: "Computer Science",
-      title: "Modeling Psychophysical Data in R",
-      author: ["Kenneth Knoblauch", "Laurence T. Maloney"],
-      year: 2012,
+      title:
+        "The Full-Stack Developer: Your Essential Guide to the Everyday Skills Expected of a Modern Full-Stack Web Developer",
+      author: ["Chris Northwood"],
+      year: 2018,
     };
 
     console.log(bookMetadata);
@@ -207,5 +216,40 @@ export const getGptMetadata = async (textExtract: string) => {
     return bookMetadata;
   } catch (error) {
     console.log(error);
+  }
+};
+
+export const recursiveTextChunkSplitter = (
+  text: string,
+  chunkLength: number
+) => {
+  const textSeparator = [
+    "\n\n",
+    "\n",
+    " ",
+    ".",
+    ",",
+    "\u200b",
+    "\uff0c",
+    "\u3001",
+    "\uff0e",
+    "\u3002",
+    "",
+  ];
+
+  //base case where text length is smaller than the chunk length parameter
+  if (text.length < chunkLength) {
+    return [text];
+  } else {
+    let textPieces: string[] = [text];
+    for (const separator of textSeparator) {
+      if (text.includes(separator)) {
+        textPieces = text.split(separator);
+        break;
+      }
+    }
+    return textPieces.flatMap((text) =>
+      recursiveTextChunkSplitter(text, chunkLength)
+    );
   }
 };
