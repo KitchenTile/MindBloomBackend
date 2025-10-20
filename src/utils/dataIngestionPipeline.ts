@@ -70,12 +70,11 @@ const dataProcessor = async (
         console.log("TXT");
         data = await fs.promises.readFile(file_dir, { encoding: "utf-8" });
         break;
+      case "md":
+        console.log("MD");
+        data = await fs.promises.readFile(file_dir, { encoding: "utf-8" });
+        break;
     }
-
-    // const reader = new LlamaParseReader({
-    //     resultType: "markdown",
-    //     apiKey: process.env.LLAMA_CLOUD_API_KEY,
-    //   });
 
     console.log(data);
 
@@ -169,7 +168,7 @@ const getFileExtension = (filename: string): string | null => {
 };
 
 //feed gpt an amount of text (undetermined) and ask to get the metadata we need
-export const getGptMetadata = async (textExtract: string) => {
+const getGptMetadata = async (textExtract: string) => {
   try {
     //init gpt client
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -252,4 +251,21 @@ export const recursiveTextChunkSplitter = (
       recursiveTextChunkSplitter(text, chunkLength)
     );
   }
+};
+
+const chapterSplitter = (data: string) => {
+  //split data into chapters and return an array of chapters
+  const split = data.split("### Chapter");
+
+  // use this to feed GPT to get metadata
+  const metadataExtractor = split[0];
+  // book chapters
+  const chapters = split.slice(1);
+
+  const chapterObj = chapters.map((chapter, index) => [
+    `${index + 1}`,
+    chapter,
+  ]);
+
+  return { metadataExtractor, chapters };
 };
