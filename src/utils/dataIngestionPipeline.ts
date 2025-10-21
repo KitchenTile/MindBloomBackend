@@ -4,7 +4,6 @@ import { readFileSync } from "fs";
 import { supabase } from "../config/db.js";
 import { PDFParse } from "pdf-parse";
 import { readFile } from "node:fs/promises";
-import { LlamaParseReader } from "llama-cloud-services";
 import OpenAI from "openai";
 
 const generateEmbedding = await pipeline(
@@ -12,38 +11,46 @@ const generateEmbedding = await pipeline(
   "Supabase/gte-small"
 );
 
-interface bookMetadata {
-  topic: string;
-  title: string;
-  author: string;
-  year: number;
+interface chunkEmbeddings {
+  chapter: number;
+  content: string;
+  embedding: number[];
 }
 
 export const bookHandler = async (file_dir: string) => {
+  //get metada + embeddings from the imputted file
+  const fileData = await dataProcessor(file_dir);
+
   //chop book and return chunks + embeddings
-  const embeddings = await dataProcessor(file_dir);
+  const embeddings = fileData.result;
+
+  const metadata = fileData.metadataExtractor.slice(0, 1000);
+
+  const chapters = embeddings[embeddings.length - 1].chapter;
+
   // get the metadata from the gpt call
-  // const { topic, title, author, year } = JSON.parse(
-  //   await getGptMetadata(file_dir)
-  // );
-  // const { topic, title, author, year } = await getGptMetadata(file_dir);
+  const { topic, title, author, year } = JSON.parse(
+    await getGptMetadata(metadata)
+  );
 
-  // // upload book metadata and return id
-  // const bookId = await bookUpload(topic, title, author, year);
+  // upload book metadata and return id
+  const bookId = await bookUpload(topic, title, author, year, chapters);
 
-  // //upload chunks
-  // const data = await chunkUpload(bookId, embeddings);
+  //upload chunks
+  const data = await chunkUpload(bookId, embeddings);
 
-  // return data;
+  console.log(data);
+
+  return data;
 };
 
 // first step of the injection pipeline - loading, chunking and embedding
 const dataProcessor = async (
   file_dir: string
-): Promise<{ content: string; embedding: number[] }[]> => {
+): Promise<{ metadataExtractor: string; result: chunkEmbeddings[] }> => {
   try {
     const fileExtension = getFileExtension(file_dir);
-    let data;
+    let data: string;
 
     switch (fileExtension) {
       case "pdf":
@@ -65,37 +72,31 @@ const dataProcessor = async (
         break;
     }
 
-    console.log(data);
+    // get book metadata and chapters
+    const { metadataExtractor, chapterObj } = chapterSplitter(data);
 
-    chapterSplitter(data);
+    // split chapters into chunks
+    const chunks = chapterObj.map((chapter) => ({
+      chunks: recursiveTextChunkSplitter(chapter.content, 1000),
+      chapter: chapter.chapterNumber,
+    }));
 
-    //split and filter empty spaces
-    const chapters = chapterSplitter(data);
-
-    console.log(chapters);
-
-    const chunks = chapters.chapterObj.flatMap((chapter) =>
-      recursiveTextChunkSplitter(chapter.content, 1000)
-    );
-
-    console.log("chuks");
-    console.log(chunks);
-
+    // return an array of objects each containing chapter, content and embeddings
     const result = await Promise.all(
-      chunks.map(async (chunk) => ({
-        content: chunk,
-        embedding: (
-          await generateEmbedding(chunk, {
-            pooling: "mean",
-            normalize: true,
-          })
-        ).tolist() as number[],
-      }))
+      chunks.flatMap((chunkObj) => {
+        return chunkObj.chunks.map(async (chunk) => ({
+          chapter: chunkObj.chapter,
+          content: chunk,
+          embedding: (
+            await generateEmbedding(chunk, {
+              pooling: "mean",
+              normalize: true,
+            })
+          ).tolist() as number[],
+        }));
+      })
     );
-
-    console.log(result);
-
-    return result;
+    return { metadataExtractor, result };
   } catch (error) {
     console.log(error);
   }
@@ -104,15 +105,15 @@ const dataProcessor = async (
 //upsert and handle the chunks (insert or upload)
 const chunkUpload = async (
   book_id: string,
-  embeddings: { content: string; embedding: number[] }[]
+  embeddings: { chapter: number; content: string; embedding: number[] }[]
 ) => {
   try {
     const bookId = book_id;
     const chunksToUpsert = embeddings.map(
-      (e: { content: string; embedding: number[] }, index) => {
+      (e: { chapter: number; content: string; embedding: number[] }, index) => {
         const chunkObject = {
           book_id: bookId,
-          chapter: 1,
+          chapter: e.chapter,
           chunk_content: e.content,
           chunk_order: index,
           embedding: e.embedding[0],
@@ -139,18 +140,27 @@ const bookUpload = async (
   topic: string,
   title: string,
   author: string[],
-  year: number
+  year: number,
+  chapters: number
 ): Promise<string> => {
   try {
+    console.log("data");
+    console.log(topic, title, author.join(), year);
+    const authorStr = author.join();
     const { data, error } = await supabase
       .from("books")
       .insert({
         title: title,
-        author: author,
+        author: authorStr,
         topic: topic,
+        chapters: 3,
         year: year,
       })
       .select("id");
+
+    if (error) console.log(error);
+
+    console.log(data);
 
     if (data && data.length > 0) {
       return data[0].id;
@@ -173,42 +183,42 @@ const getGptMetadata = async (textExtract: string) => {
     //init gpt client
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // //ask gpt for metadata
-    // const gptReply = await client.chat.completions.create({
-    //   model: "gpt-5",
-    //   // text: { type: "json_schema" },
-    //   response_format: { type: "json_object" },
+    //ask gpt for metadata
+    const gptReply = await client.chat.completions.create({
+      model: "gpt-5",
+      // text: { type: "json_schema" },
+      response_format: { type: "json_object" },
 
-    //   messages: [
-    //     {
-    //       role: "system",
-    //       content: `
-    //       You are an expert Librarian and Metadata Extractor. Your task is to analyze the provided text snippet, identify the full title and author of the book, and then use your knowledge and external search tools to find the required publication details.
+      messages: [
+        {
+          role: "system",
+          content: `
+          You are an expert Librarian and Metadata Extractor. Your task is to analyze the provided text snippet, identify the full title and author of the book, and then use your knowledge and external search tools to find the required publication details.
 
-    //       1. **Required Fields:** You MUST return a single JSON object with the following four keys.
-    //         - "topic": (The book's topic from the following options: "Biology", "English", "Computer Science", "History")
-    //         - "title": (The full book title as a string)
-    //         - "author": (The full name of the author, as an array of strings)
-    //         - "year": (The year of publication as a number)
+          1. **Required Fields:** You MUST return a single JSON object with the following four keys.
+            - "topic": (The book's topic from the following options: "Biology", "English", "Computer Science", "History")
+            - "title": (The full book title as a string)
+            - "author": (The full name of the author, as an array of strings)
+            - "year": (The year of publication as a number)
 
-    //       2. **Output Rule:** Your entire response MUST be valid JSON. DO NOT include any introductory or concluding text.
-    //       `,
-    //     },
-    //     {
-    //       role: "user",
-    //       content: `pelase find the following book and its information ${textExtract}`,
-    //     },
-    //   ],
-    // });
-    // const bookMetadata = gptReply.choices[0].message.content;
+          2. **Output Rule:** Your entire response MUST be valid JSON. DO NOT include any introductory or concluding text.
+          `,
+        },
+        {
+          role: "user",
+          content: `pelase find the following book and its information ${textExtract}`,
+        },
+      ],
+    });
+    const bookMetadata = gptReply.choices[0].message.content;
 
-    const bookMetadata = {
-      topic: "Computer Science",
-      title:
-        "The Full-Stack Developer: Your Essential Guide to the Everyday Skills Expected of a Modern Full-Stack Web Developer",
-      author: ["Chris Northwood"],
-      year: 2018,
-    };
+    // const bookMetadata = {
+    //   topic: "Computer Science",
+    //   title:
+    //     "The Full-Stack Developer: Your Essential Guide to the Everyday Skills Expected of a Modern Full-Stack Web Developer",
+    //   author: ["Chris Northwood"],
+    //   year: 2018,
+    // };
 
     console.log(bookMetadata);
 
