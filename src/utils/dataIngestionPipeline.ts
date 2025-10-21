@@ -26,13 +26,15 @@ export const bookHandler = async (file_dir: string) => {
   // const { topic, title, author, year } = JSON.parse(
   //   await getGptMetadata(file_dir)
   // );
-  const { topic, title, author, year } = await getGptMetadata(file_dir);
+  // const { topic, title, author, year } = await getGptMetadata(file_dir);
 
-  // upload book metadata and return id
-  const bookId = await bookUpload(topic, title, author, year);
-  //upload chunks
-  const data = await chunkUpload(bookId, embeddings);
-  return data;
+  // // upload book metadata and return id
+  // const bookId = await bookUpload(topic, title, author, year);
+
+  // //upload chunks
+  // const data = await chunkUpload(bookId, embeddings);
+
+  // return data;
 };
 
 // first step of the injection pipeline - loading, chunking and embedding
@@ -48,23 +50,10 @@ const dataProcessor = async (
         console.log("PDF");
         const buffer = await readFile(file_dir);
         const parser = new PDFParse({ data: buffer });
-        // const textResult = await parser.getText();
+        const textResult = await parser.getText();
 
-        // data = {
-        //   bookInfo: info,
-        //   bookText: textResult
-        // }
-
-        const reader = new LlamaParseReader({
-          resultType: "markdown",
-          apiKey: process.env.LLAMA_CLOUD_API_KEY,
-        });
-
-        const documents = await reader.loadData(file_dir);
-
-        // await parser.destroy();
-        // data = textResult.text;
-        data = documents;
+        await parser.destroy();
+        data = textResult.text;
         break;
       case "txt":
         console.log("TXT");
@@ -78,10 +67,19 @@ const dataProcessor = async (
 
     console.log(data);
 
+    chapterSplitter(data);
+
     //split and filter empty spaces
-    const chunks = data
-      .split(/\r?\n\r?\n/)
-      .filter((chunk) => chunk.trim().length > 0);
+    const chapters = chapterSplitter(data);
+
+    console.log(chapters);
+
+    const chunks = chapters.chapterObj.flatMap((chapter) =>
+      recursiveTextChunkSplitter(chapter.content, 1000)
+    );
+
+    console.log("chuks");
+    console.log(chunks);
 
     const result = await Promise.all(
       chunks.map(async (chunk) => ({
@@ -94,6 +92,8 @@ const dataProcessor = async (
         ).tolist() as number[],
       }))
     );
+
+    console.log(result);
 
     return result;
   } catch (error) {
@@ -236,24 +236,55 @@ export const recursiveTextChunkSplitter = (
     "",
   ];
 
-  //base case where text length is smaller than the chunk length parameter
+  const combinedChunks: string[] = [];
+  let currentChunk = "";
+
+  //If text is short enough, return it as a single chunk
   if (text.length < chunkLength) {
     return [text];
   } else {
     let textPieces: string[] = [text];
+
+    // Find the largest separator present and split the text
     for (const separator of textSeparator) {
       if (text.includes(separator)) {
+        // Splitting the main text variable
         textPieces = text.split(separator);
         break;
       }
     }
-    return textPieces.flatMap((text) =>
-      recursiveTextChunkSplitter(text, chunkLength)
+
+    // Make sure every piece is broken down smaller than chunkLength
+    const recursivelyChunkedPieces = textPieces.flatMap((piece) =>
+      recursiveTextChunkSplitter(piece, chunkLength)
     );
+
+    // assemble the pieces into final chunks
+    for (const piece of recursivelyChunkedPieces) {
+      // Check if adding the new piece overflows the chunk limit
+      if (currentChunk.length + piece.length + 1 > chunkLength) {
+        combinedChunks.push(currentChunk);
+        currentChunk = piece;
+      } else {
+        currentChunk += (currentChunk ? " " : "") + piece;
+      }
+    }
+
+    if (currentChunk) {
+      combinedChunks.push(currentChunk);
+    }
+
+    return combinedChunks;
   }
 };
 
-const chapterSplitter = (data: string) => {
+//Large books need to be subdivided into chapters and THEN into chunks
+const chapterSplitter = (
+  data: string
+): {
+  metadataExtractor: string;
+  chapterObj: { chapterNumber: number; content: string }[];
+} => {
   //split data into chapters and return an array of chapters
   const split = data.split("### Chapter");
 
@@ -262,10 +293,10 @@ const chapterSplitter = (data: string) => {
   // book chapters
   const chapters = split.slice(1);
 
-  const chapterObj = chapters.map((chapter, index) => [
-    `${index + 1}`,
-    chapter,
-  ]);
+  const chapterObj = chapters.map((chapter, index) => ({
+    chapterNumber: index + 1,
+    content: chapter,
+  }));
 
-  return { metadataExtractor, chapters };
+  return { metadataExtractor, chapterObj };
 };
