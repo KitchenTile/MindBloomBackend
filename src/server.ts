@@ -5,8 +5,12 @@ import { logger } from "./middleware/logger.js";
 import lessonRouter from "./routes/lessonRoutes.js";
 import orderRouter from "./routes/orderRoutes.js";
 import ragRouter from "./routes/ragRoutes.js";
-import { bookHandler, getGptMetadata } from "./utils/dataIngestionPipeline.js";
+import {
+  bookHandler,
+  recursiveTextChunkSplitter,
+} from "./utils/dataIngestionPipeline.js";
 // import { getQuestionEmbedding } from "./utils/userDataRetrival.js";
+import fs from "fs";
 
 const app = express();
 
@@ -43,14 +47,22 @@ const bookMetadata = {
 };
 
 // const textExtract =
-//   "## Use R! _Series Editors:_ Robert Gentleman Kurt Hornik Giovanni G. Parmigiani For further volumes: [http://www.springer.com/series/6991](http://www.springer.com/series/6991) ## Kenneth Knoblauch • Laurence T. Maloney ## Modeling Psychophysical ## Data in R # 123 Kenneth Knoblauch Department of Integrative Neurosciences Stem-cell and Brain Research Institute INSERM U846 18 avenue du Doyen Lépine Bron, France Laurence T. Maloney Department of Psychology Center for Neural Science New York University 6 Washington Place, 2nd Floor New York, USA _Series Editors:_ Robert Gentleman Program in Computational Biology Division of Public Health Sciences Fred Hutchinson Cancer Research Center 1100 Fairview Ave. N, M2-B876 Seattle, Washington 98109-1024 USA Giovanni G. Parmigiani The Sidney Kimmel Comprehensive Cancer Center at Johns Hopkins University 550 North Broadway Baltimore, MD 21205-2011 USA";
+//   "## Use R! _Series Editors:_ Robert Gentleman Kurt Hornik Giovanni G. Parmigiani For further volumes: [http://www.springer.com/series/6991](http://www.springer.com/series/6991) ## Kenneth Knoblauch \n • Laurence T. Maloney ## Modeling Psychophysical ## Data in R # 123 Kenneth Knoblauch Department of Integrative Neurosciences Stem-cell and Brain Research Institute INSERM U846 18 avenue du Doyen Lépine Bron, France Laurence T. Maloney Department of Psychology Center for Neural Science New York University 6 Washington Place, 2nd /n Floor New York, USA _Series Editors:_ Robert Gentleman Program in Computational Biology Division of Public Health Sciences Fred Hutchinson Cancer Research Center 1100 Fairview Ave. N, M2-B876 Seattle, Washington 98109-1024 USA \n Giovanni G. Parmigiani The Sidney Kimmel Comprehensive Cancer Center at Johns Hopkins University 550 North Broadway Baltimore, MD 21205-2011 USA";
 
 // getGptMetadata(textExtract);
-// bookHandler("src/data/FULLSTACKHANDBOOK.pdf", bookMetadata);
+bookHandler("src/data/shortertext.md");
+
+// const data = await fs.promises.readFile("src/data/shortertext.md", {
+//   encoding: "utf-8",
+// });
+
+// console.log(data.split("\n"));
 
 app.listen(PORT, () => {
   console.log(`server running on localhost:${PORT}`);
 });
+
+// console.log(recursiveTextChunkSplitter(textExtract, 1000));
 
 app.use(
   (
