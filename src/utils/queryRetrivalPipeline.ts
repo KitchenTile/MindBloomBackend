@@ -43,9 +43,7 @@ export const handleUserQuery = async (question: string) => {
 };
 
 //vectorize user's question
-export const getQuestionEmbedding = async (
-  question: string
-): Promise<number[]> => {
+const getQuestionEmbedding = async (question: string): Promise<number[]> => {
   //supabase small has a 512 token limit. Could consider chunking lengthy questions
   const embeddedQuestion = (
     await generateEmbedding(question, {
