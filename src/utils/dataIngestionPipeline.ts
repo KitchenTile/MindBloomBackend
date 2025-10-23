@@ -228,10 +228,7 @@ const getGptMetadata = async (textExtract: string) => {
   }
 };
 
-export const recursiveTextChunkSplitter = (
-  text: string,
-  chunkLength: number
-) => {
+const recursiveTextChunkSplitter = (text: string, chunkLength: number) => {
   const textSeparator = [
     "\n\n",
     "\n",
