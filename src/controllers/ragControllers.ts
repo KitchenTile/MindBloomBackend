@@ -132,7 +132,7 @@ export const editChatTitle = async (req: Request, res: Response) => {
   }
 };
 
-// -- helper functions --
+// helper functions
 
 const uploadMessage = async (chatId: string, message: string, role: string) => {
   if (!chatId) {
