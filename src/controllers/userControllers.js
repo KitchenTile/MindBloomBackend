@@ -1,31 +1,58 @@
-import {
-  comparePassword,
-  hashPassword,
-  isPasswordValid,
-} from "../utils/passwordUtils.js";
-import { connectDB } from "../config/db.js";
+import { isPasswordValid } from "../utils/passwordUtils.js";
+import { supabase } from "../config/db.js";
 
 export const createUser = async (req, res) => {
   try {
-    const db = await connectDB();
-    const { userName, email, password, role } = req.body;
+    const { name, email, password, role, phoneNumber } = req.body;
 
-    if (!userName || !email || !password) {
+    if (!name || !email || !password || !phoneNumber) {
       return res.status(400).send("Missing required fields");
     }
 
-    // if (!isPasswordValid(password)) {
-    //   return res.status(400).send("Password not strong enough");
-    // }
+    if (!isPasswordValid(password)) {
+      return res.status(400).send("Password not strong enough");
+    }
 
-    const hashedPassword = await hashPassword(password);
+    // Sign up with email, add metadata like user name and phone number
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          full_name: name,
+          phone_number: phoneNumber,
+        },
+      },
+    });
 
-    const user = { userName, email, hashedPassword, role };
+    //get the new user
+    const newUser = data.user;
 
-    // upload user to db with hashed password
-    const addUser = await db.collection("users").insertOne(user);
+    if (!newUser) {
+      return res.status(202).json({
+        message:
+          "User created. Please check your email to confirm registration.",
+      });
+    }
+    if (error)
+      return res
+        .status(400)
+        .json({ message: "Sign Up Failed: " + error.message });
 
-    return res.status(200).json({ user });
+    const { error: roleError } = await supabase.from("user_roles").insert({
+      user_id: newUser.id,
+      role: role === "admin" ? "admin" : "student",
+    });
+
+    if (roleError)
+      return res
+        .status(500)
+        .json({ message: "Registration failed during role assignment." });
+
+    return res.status(201).json({
+      message: "User and Role created successfully.",
+      user_id: newUser.id,
+    });
   } catch (error) {
     console.log(error);
   }
@@ -33,28 +60,17 @@ export const createUser = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const db = await connectDB();
     const { email, password } = req.body;
     console.log(email);
 
     if (!email || !password)
       return res.status(400).send("Missing required fields");
 
-    //get user from db
-    const user = await db.collection("users").findOne({ email: email });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    console.log(user);
-
-    //compare passwords
-    const passwordMatch = await comparePassword(password, user.hashedPassword);
-
-    if (!passwordMatch) {
-      return res.status(401).json({ message: "Invalid credential" });
-    }
+    // Sign in with email
+    const { user, error } = await supabase.auth.signIn({
+      email: "example@email.com",
+      password: "example-password",
+    });
   } catch (error) {
     console.log(error);
   }
