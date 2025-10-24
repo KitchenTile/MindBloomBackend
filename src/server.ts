@@ -5,6 +5,8 @@ import { logger } from "./middleware/logger.js";
 import lessonRouter from "./routes/lessonRoutes.js";
 import orderRouter from "./routes/orderRoutes.js";
 import ragRouter from "./routes/ragRoutes.js";
+import userRouter from "./routes/userRoutes.js";
+
 import { bookHandler } from "./utils/dataIngestionPipeline.js";
 import fs from "fs";
 
@@ -33,6 +35,7 @@ app.get("/", (_req, res) => {
 app.use("/lessons", lessonRouter);
 app.use("/orders", orderRouter);
 app.use("/chat", ragRouter);
+app.use("/users", userRouter);
 
 // bookHandler("src/data/shortertext.md");
 
