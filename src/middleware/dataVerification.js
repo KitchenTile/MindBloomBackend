@@ -1,10 +1,4 @@
-import { NextFunction, Request, Response } from "express";
-
-export const verifyAddOrder = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const verifyAddOrder = (req, res, next) => {
   const { lessonIds, name, phoneNumber, numOfSpaces } = req.body;
 
   if (!lessonIds || !name || !phoneNumber || !numOfSpaces) {
@@ -33,7 +27,7 @@ export const verifyAddOrder = (
       .json({ message: "Phone number must be at least 7 characters" });
   }
 
-  if (!numOfSpaces.every((n: any) => typeof n === "number" && n > 0)) {
+  if (!numOfSpaces.every((n) => typeof n === "number" && n > 0)) {
     return res
       .status(400)
       .json({ message: "numOfSpaces must be positive numbers" });

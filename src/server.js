@@ -43,18 +43,11 @@ app.listen(PORT, () => {
   console.log(`server running on localhost:${PORT}`);
 });
 
-app.use(
-  (
-    err: any,
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
-    console.error("Error:", err.stack || err.message);
+app.use((err, req, res, next) => {
+  console.error("Error:", err.stack || err.message);
 
-    res.status(err.status || 500).json({
-      success: false,
-      message: err.message || "Internal Server Error",
-    });
-  }
-);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});

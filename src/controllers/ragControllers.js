@@ -1,19 +1,8 @@
-import { Request, Response } from "express";
 import { handleUserQuery } from "../utils/queryRetrivalPipeline.js";
 import OpenAI from "openai";
 import { supabase } from "../config/db.js";
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: string;
-}
-
-interface ChatRow {
-  messages: ChatMessage[];
-}
-
-export const handleChat = async (req: Request, res: Response) => {
+export const handleChat = async (req, res) => {
   try {
     //init gpt client
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -38,7 +27,7 @@ export const handleChat = async (req: Request, res: Response) => {
 
     // We only pass role/content to the LLM
     const historyMessages = rawHistory.map((msg) => ({
-      role: msg.role as "user" | "assistant",
+      role: msg.role,
       content: msg.content,
     }));
 
@@ -48,7 +37,7 @@ export const handleChat = async (req: Request, res: Response) => {
     //Format the information returned in a way it's easily understood by the LLM, providing some metadata
     const chunkContentFormatted = relataedChunks
       .map(
-        (chunk: any, index: number) =>
+        (chunk, index) =>
           `--- SOURCE ${index + 1} (Title: ${chunk.book_title}, Author: ${chunk.book_author}, Chapter ${chunk.chapter}) ---\n${chunk.chunk_content}\n`
       )
       .join("\n\n");
@@ -88,7 +77,7 @@ export const handleChat = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllChats = async (req: Request, res: Response) => {
+export const getAllChats = async (req, res) => {
   try {
     const { data, error } = await supabase.from("chats").select();
 
@@ -100,7 +89,7 @@ export const getAllChats = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteChat = async (req: Request, res: Response) => {
+export const deleteChat = async (req, res) => {
   try {
     const chatId = req.body.chatId;
     const { data, error } = await supabase
@@ -115,7 +104,7 @@ export const deleteChat = async (req: Request, res: Response) => {
   }
 };
 
-export const editChatTitle = async (req: Request, res: Response) => {
+export const editChatTitle = async (req, res) => {
   try {
     const chatId = req.body.chatId;
     const newTitle = req.body.newTitle;
@@ -134,7 +123,7 @@ export const editChatTitle = async (req: Request, res: Response) => {
 
 // helper functions
 
-const uploadMessage = async (chatId: string, message: string, role: string) => {
+const uploadMessage = async (chatId, message, role) => {
   if (!chatId) {
     console.log("No chat ID");
   }
@@ -166,7 +155,7 @@ const uploadMessage = async (chatId: string, message: string, role: string) => {
   }
 };
 
-const fetchChat = async (chatId: string): Promise<ChatRow | null> => {
+const fetchChat = async (chatId) => {
   const { data, error } = await supabase
     .from("chats")
     .select("messages")
@@ -176,5 +165,5 @@ const fetchChat = async (chatId: string): Promise<ChatRow | null> => {
     console.error("Supabase fetchChat error:", error);
     throw error;
   }
-  return data as ChatRow | null;
+  return data;
 };

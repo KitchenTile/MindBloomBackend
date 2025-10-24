@@ -1,8 +1,8 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
 //MONGO
-const uri = process.env.MONGO_URI!;
+const uri = process.env.MONGO_URI;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -12,7 +12,7 @@ const client = new MongoClient(uri, {
   },
 });
 
-let db: any;
+let db;
 
 export async function connectDB() {
   if (db) return db;
@@ -33,4 +33,4 @@ export async function connectDB() {
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_API_KEY;
 
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey);

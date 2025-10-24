@@ -1,6 +1,6 @@
 {
   "watch": ["src"],
   "ignore": ["src/**/*.spec.ts"],
-  "ext": "ts,js,html,css,ejs,json",
-  "exec": "tsx --env-file .env ./src/server.ts"
+  "ext": "js,html,css,ejs,json",
+  "exec": "node --env-file .env ./src/server.js"
 }

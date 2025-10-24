@@ -1,7 +1,6 @@
-import { Request, Response } from "express";
 import { connectDB } from "../config/db.js";
 
-export const addOrder = async (req: Request, res: Response) => {
+export const addOrder = async (req, res) => {
   try {
     const db = await connectDB();
 

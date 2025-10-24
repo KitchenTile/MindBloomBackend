@@ -1,9 +1,8 @@
-import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { connectDB } from "../config/db.js";
 
 //get all the lessons
-export const getAllLessons = async (req: Request, res: Response) => {
+export const getAllLessons = async (req, res) => {
   try {
     const db = await connectDB();
     const lessonsCollection = db.collection("lessons");
@@ -20,10 +19,7 @@ export const getAllLessons = async (req: Request, res: Response) => {
 };
 
 //update individual lessons basend on order
-export const updateLesson = async (
-  req: Request<{ id: string }>,
-  res: Response
-) => {
+export const updateLesson = async (req, res) => {
   try {
     console.log(req.params.id);
     const db = await connectDB();
