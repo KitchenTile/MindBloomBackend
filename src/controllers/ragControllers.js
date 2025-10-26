@@ -6,18 +6,22 @@ export const handleChat = async (req, res) => {
   try {
     //init gpt client
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const userQuery = req.body.userQuery;
-    const chatId = req.body.chatId;
-    console.log("chatId");
+    const { chatId, userQuery } = req.body;
+
+    //get userId from session
+    const currentUser = await supabase.auth.getUser();
+    const userId = currentUser.data.user.id;
 
     console.log(chatId);
+    console.log(userId);
+    console.log(userQuery);
 
     if (!userQuery) {
       return res.status(400).json({ message: "Query is required" });
     }
 
     //upload user message
-    await uploadMessage(chatId, userQuery, "user");
+    await uploadMessage(chatId, userId, userQuery, "user");
 
     //get chat data
     const chatData = await fetchChat(chatId);
@@ -68,7 +72,7 @@ export const handleChat = async (req, res) => {
     console.log("- REPLY -");
     console.log(replyContent);
 
-    await uploadMessage(chatId, replyContent, "assistant");
+    await uploadMessage(chatId, userId, replyContent, "assistant");
 
     return res.status(200).json(replyContent);
   } catch (error) {
@@ -123,7 +127,7 @@ export const editChatTitle = async (req, res) => {
 
 // helper functions
 
-const uploadMessage = async (chatId, message, role) => {
+const uploadMessage = async (chatId, userId, message, role) => {
   if (!chatId) {
     console.log("No chat ID");
   }
@@ -139,7 +143,7 @@ const uploadMessage = async (chatId, message, role) => {
     const { error } = await supabase.from("chats").insert({
       chat_id: chatId,
       title: "New Chat",
-      user_id: chatId,
+      user_id: userId,
       messages: [messageObj],
       created_at: date,
     });
