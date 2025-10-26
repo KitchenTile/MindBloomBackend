@@ -67,10 +67,30 @@ export const login = async (req, res) => {
       return res.status(400).send("Missing required fields");
 
     // Sign in with email
-    const { user, error } = await supabase.auth.signIn({
-      email: "example@email.com",
-      password: "example-password",
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
     });
+
+    if (error) return res.status(400).json({ message: error });
+
+    console.log(data.user);
+    console.log("session");
+    console.log(await supabase.auth.getSession());
+    console.log("user");
+    console.log(await supabase.auth.getUser());
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) return res.status(400).json({ message: error });
   } catch (error) {
     console.log(error);
   }
