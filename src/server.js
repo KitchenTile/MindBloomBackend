@@ -37,8 +37,6 @@ app.use("/orders", orderRouter);
 app.use("/chat", ragRouter);
 app.use("/users", userRouter);
 
-// bookHandler("src/data/shortertext.md");
-
 app.listen(PORT, () => {
   console.log(`server running on localhost:${PORT}`);
 });
