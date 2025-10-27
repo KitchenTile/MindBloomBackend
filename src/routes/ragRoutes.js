@@ -4,6 +4,7 @@ import {
   editChatTitle,
   getAllChats,
   handleChat,
+  uploadBook,
 } from "../controllers/ragControllers.js";
 
 const ragRouter = express.Router();
@@ -13,5 +14,6 @@ ragRouter.post("/", handleChat);
 ragRouter.get("/", getAllChats);
 ragRouter.delete("/", deleteChat);
 ragRouter.put("/", editChatTitle);
+ragRouter.post("/upload", uploadBook);
 
 export default ragRouter;
