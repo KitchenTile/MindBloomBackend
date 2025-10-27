@@ -1,6 +1,7 @@
 import { handleUserQuery } from "../utils/queryRetrivalPipeline.js";
 import OpenAI from "openai";
 import { supabase } from "../config/db.js";
+import { bookHandler } from "../utils/dataIngestionPipeline.js";
 
 export const handleChat = async (req, res) => {
   try {
@@ -170,4 +171,14 @@ const fetchChat = async (chatId) => {
     throw error;
   }
   return data;
+};
+
+export const uploadBook = async (req, res) => {
+  try {
+    await bookHandler(req.body.file);
+
+    return res.status(200).json({ message: "file succesfully uploaded" });
+  } catch (error) {
+    console.log(error);
+  }
 };
