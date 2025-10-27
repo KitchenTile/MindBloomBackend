@@ -11,9 +11,9 @@ const generateEmbedding = await pipeline(
   "Supabase/gte-small"
 );
 
-export const bookHandler = async (file_dir) => {
+export const bookHandler = async (file) => {
   //get metada + embeddings from the imputted file
-  const fileData = await dataProcessor(file_dir);
+  const fileData = await dataProcessor(file);
 
   //chop book and return chunks + embeddings
   const embeddings = fileData.result;
@@ -39,30 +39,38 @@ export const bookHandler = async (file_dir) => {
 };
 
 // first step of the injection pipeline - loading, chunking and embedding
-const dataProcessor = async (file_dir) => {
+const dataProcessor = async (file) => {
   try {
-    const fileExtension = getFileExtension(file_dir);
-    let data;
+    //This is how I would do my file conversion server-side
 
-    switch (fileExtension) {
-      case "pdf":
-        console.log("PDF");
-        const buffer = await readFile(file_dir);
-        const parser = new PDFParse({ data: buffer });
-        const textResult = await parser.getText();
+    // const fileExtension = getFileExtension(file_dir);
+    // let data;
 
-        await parser.destroy();
-        data = textResult.text;
-        break;
-      case "txt":
-        console.log("TXT");
-        data = await fs.promises.readFile(file_dir, { encoding: "utf-8" });
-        break;
-      case "md":
-        console.log("MD");
-        data = await fs.promises.readFile(file_dir, { encoding: "utf-8" });
-        break;
-    }
+    // switch (fileExtension) {
+    //   case "pdf":
+    //     console.log("PDF");
+    //     const buffer = await readFile(file_dir);
+    //     const parser = new PDFParse({ data: buffer });
+    //     const textResult = await parser.getText();
+
+    //     await parser.destroy();
+    //     data = textResult.text;
+    //     break;
+    //   case "txt":
+    //     console.log("TXT");
+    //     data = await fs.promises.readFile(file_dir, { encoding: "utf-8" });
+    //     break;
+    //   case "md":
+    //     console.log("MD");
+    //     data = await fs.promises.readFile(file_dir, { encoding: "utf-8" });
+    //     break;
+    // }
+
+    const data = file;
+
+    console.log("DATA");
+
+    console.log(data);
 
     // get book metadata and chapters
     const { metadataExtractor, chapterObj } = chapterSplitter(data);
@@ -88,6 +96,11 @@ const dataProcessor = async (file_dir) => {
         }));
       })
     );
+
+    console.log("chapter obj");
+    console.log(chapterObj);
+    console.log("extractor");
+    console.log(metadataExtractor);
     return { metadataExtractor, result };
   } catch (error) {
     console.log(error);
@@ -192,14 +205,6 @@ const getGptMetadata = async (textExtract) => {
       ],
     });
     const bookMetadata = gptReply.choices[0].message.content;
-
-    // const bookMetadata = {
-    //   topic: "Computer Science",
-    //   title:
-    //     "The Full-Stack Developer: Your Essential Guide to the Everyday Skills Expected of a Modern Full-Stack Web Developer",
-    //   author: ["Chris Northwood"],
-    //   year: 2018,
-    // };
 
     console.log(bookMetadata);
 
