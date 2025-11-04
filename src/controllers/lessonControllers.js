@@ -32,7 +32,7 @@ export const updateLesson = async (req, res) => {
     for (let i = 0; i < currentOrder.lessonsOrdered.length; i++) {
       await lessonsCollection.updateOne(
         { _id: new ObjectId(currentOrder.lessonsOrdered[i].lessonId) },
-        { $inc: { numOfSpaces: -currentOrder.lessonsOrdered[i].numOfSpaces } }
+        { $inc: { availability: -currentOrder.lessonsOrdered[i].availability } }
       );
     }
 
