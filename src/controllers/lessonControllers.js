@@ -21,7 +21,6 @@ export const getAllLessons = async (req, res) => {
 //update individual lessons basend on order
 export const updateLesson = async (req, res) => {
   try {
-    console.log(req.params.id);
     const db = await connectDB();
     const lessonsCollection = db.collection("lessons");
     const ordersCollection = db.collection("orders");
