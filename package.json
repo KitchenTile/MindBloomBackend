@@ -22,7 +22,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/server.js",
+    "start": "node --env-file .env src/server.js",
     "dev": "node --env-file .env ./src/server.js"
   },
   "keywords": [],
