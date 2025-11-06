@@ -2,17 +2,13 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.74.0",
     "@xenova/transformers": "^2.17.2",
-    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "eslint": "^8.57.1",
     "express": "^5.1.0",
-    "llama-cloud-services": "^0.3.8",
     "mongodb": "^6.20.0",
     "nodemon": "^3.1.10",
     "openai": "^6.2.0",
-    "pdf-parse": "^2.2.6",
-    "pdfdataextract": "^4.0.0",
     "prettier": "^3.6.2",
     "prettier-eslint": "^16.4.2"
   },
