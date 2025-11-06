@@ -7,9 +7,6 @@ import orderRouter from "./routes/orderRoutes.js";
 import ragRouter from "./routes/ragRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 
-import { bookHandler } from "./utils/dataIngestionPipeline.js";
-import fs from "fs";
-
 const app = express();
 
 connectDB().catch(console.dir);
@@ -25,10 +22,14 @@ app.use(express.json());
 
 app.use(logger);
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8080;
 
 app.get("/", (_req, res) => {
   res.send("Server running as intended");
+});
+
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
 });
 
 //use the routes created in the routes directories
