@@ -1,9 +1,5 @@
 import { pipeline } from "@xenova/transformers";
-import fs from "fs";
-import { readFileSync } from "fs";
 import { supabase } from "../config/db.js";
-import { PDFParse } from "pdf-parse";
-import { readFile } from "node:fs/promises";
 import OpenAI from "openai";
 
 const generateEmbedding = await pipeline(
