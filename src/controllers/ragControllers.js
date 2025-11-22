@@ -38,14 +38,19 @@ export const handleChat = async (req, res) => {
 
     //similarity search
     const relataedChunks = await handleUserQuery(userQuery);
+    let chunkContentFormatted;
 
-    //Format the information returned in a way it's easily understood by the LLM, providing some metadata
-    const chunkContentFormatted = relataedChunks
-      .map(
-        (chunk, index) =>
-          `--- SOURCE ${index + 1} (Title: ${chunk.book_title}, Author: ${chunk.book_author}, Chapter ${chunk.chapter}) ---\n${chunk.chunk_content}\n`
-      )
-      .join("\n\n");
+    if (!relataedChunks) {
+      chunkContentFormatted = "No document present to help with user query.";
+    } else {
+      //Format the information returned in a way it's easily understood by the LLM, providing some metadata
+      chunkContentFormatted = relataedChunks
+        .map(
+          (chunk, index) =>
+            `--- SOURCE ${index + 1} (Title: ${chunk.book_title}, Author: ${chunk.book_author}, Chapter ${chunk.chapter}) ---\n${chunk.chunk_content}\n`
+        )
+        .join("\n\n");
+    }
 
     console.log(chunkContentFormatted);
 

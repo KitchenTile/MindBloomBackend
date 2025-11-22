@@ -28,12 +28,12 @@ export const createUser = async (req, res) => {
     //get the new user
     const newUser = data.user;
 
-    if (!newUser) {
-      return res.status(202).json({
-        message:
-          "User created. Please check your email to confirm registration.",
-      });
-    }
+    // if (!newUser) {
+    //   return res.status(202).json({
+    //     message:
+    //       "User created. Please check your email to confirm registration.",
+    //   });
+    // }
     if (error)
       return res
         .status(400)

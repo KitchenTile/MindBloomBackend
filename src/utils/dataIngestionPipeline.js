@@ -16,6 +16,7 @@ export const bookHandler = async (file) => {
 
   const metadata = fileData.metadataExtractor.slice(0, 1000);
 
+  //number of chapters
   const chapters = embeddings[embeddings.length - 1].chapter;
 
   // get the metadata from the gpt call
@@ -167,7 +168,7 @@ const getFileExtension = (filename) => {
   return parts.length > 1 ? parts.pop()?.toLowerCase() : null;
 };
 
-//feed gpt an amount of text (undetermined) and ask to get the metadata we need
+//feed gpt an amount of text and ask to get the metadata we need
 const getGptMetadata = async (textExtract) => {
   try {
     //init gpt client

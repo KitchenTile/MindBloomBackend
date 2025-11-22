@@ -6,6 +6,7 @@ import lessonRouter from "./routes/lessonRoutes.js";
 import orderRouter from "./routes/orderRoutes.js";
 import ragRouter from "./routes/ragRoutes.js";
 import userRouter from "./routes/userRoutes.js";
+import searchRouter from "./routes/searchRoutes.js";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use("/lessons", lessonRouter);
 app.use("/orders", orderRouter);
 app.use("/chat", ragRouter);
 app.use("/users", userRouter);
+app.use("/search", searchRouter);
 
 app.listen(PORT, () => {
   console.log(`server running on localhost:${PORT}`);
