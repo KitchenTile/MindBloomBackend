@@ -13,6 +13,11 @@ export const handleUserQuery = async (question) => {
   //semantic search
   const chunks = await matchBookChunks(embedding);
 
+  // if the sematic search return an empty array, return null
+  if (chunks.length === 0) {
+    return null;
+  }
+
   const addedContext = await getChunkNeighbours(chunks);
 
   // data from chunks + added context with metadata
